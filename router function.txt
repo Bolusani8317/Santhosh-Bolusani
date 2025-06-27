@@ -1,0 +1,25 @@
+import os, json
+from azure.cosmos import CosmosClient
+from azure.storage.blob import BlobServiceClient
+import azure.functions as func
+
+COSMOS_URL = os.getenv('COSMOS_DB_URL')
+COSMOS_KEY = os.getenv('COSMOS_DB_KEY')
+COSMOS_DB = os.getenv('COSMOS_DB_NAME')
+COSMOS_CONTAINER = os.getenv('COSMOS_CONTAINER')
+
+BLOB_CONN = os.getenv('BLOB_STORAGE_CONN')
+BLOB_CONTAINER = os.getenv('BLOB_CONTAINER')
+
+def main(req: func.HttpRequest) -> func.HttpResponse:
+    record_id = req.route_params.get('id')
+    client = CosmosClient(COSMOS_URL, COSMOS_KEY)
+    container = client.get_database_client(COSMOS_DB).get_container_client(COSMOS_CONTAINER)
+    try:
+        item = container.read_item(record_id, partition_key=record_id)
+        return func.HttpResponse(json.dumps(item), mimetype='application/json')
+    except:
+        blob_service = BlobServiceClient.from_connection_string(BLOB_CONN)
+        blob = blob_service.get_blob_client(BLOB_CONTAINER, f"{record_id}.json")
+        data = blob.download_blob().readall()
+        return func.HttpResponse(data, mimetype='application/json')
