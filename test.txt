@@ -1,0 +1,18 @@
+import pytest
+from functions.router_function.__init__ import main
+from azure.functions import HttpRequest
+
+class Dummy:
+    pass
+
+def test_router_fallback(monkeypatch):
+    req = HttpRequest(method='GET', url='/billing/123', params={}, route_params={'id': '123'})
+    def fake_cosmos(*args, **kwargs):
+        raise Exception("not found")
+    monkeypatch.setattr('functions.router_function.CosmosClient', lambda url, key: Dummy())
+    monkeypatch.setattr('functions.router_function.BlobServiceClient', lambda conn: Dummy())
+    # configure Dummy to return sample JSON
+    Dummy.get_blob_client = lambda self, cont, name: self
+    Dummy.download_blob = lambda self: type('X', (), {'readall': lambda s: b'{"id":"123","value":42}'})
+    resp = main(req)
+    assert resp.get_body() == b'{"id":"123","value":42}'
