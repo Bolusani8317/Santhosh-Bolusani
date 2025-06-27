@@ -1,0 +1,11 @@
+```bash
+#!/bin/bash
+az storage account create \
+  --name mycoldstorage \
+  --resource-group myrg \
+  --sku Standard_LRS \
+  --location eastus
+az storage container create \
+  --name billing-archive \
+  --account-name mycoldstorage \
+  --public-access off
