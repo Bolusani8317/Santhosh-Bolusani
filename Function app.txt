@@ -1,0 +1,14 @@
+resource funcApp 'Microsoft.Web/sites@2021-02-01' = {
+  name: 'billing-archival-func'
+  location: resourceGroup().location
+  kind: 'functionapp'
+  properties: {
+    serverFarmId: '/subscriptions/.../serviceplans/consumptionPlan'
+    siteConfig: {
+      appSettings: [
+        { name: 'COSMOS_DB_CONNECTION', value: '[listKeys(...)]' }
+        { name: 'BLOB_STORAGE_CONN', value: '[listKeys(...)]' }
+      ]
+    }
+  }
+}
